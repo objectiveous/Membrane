@@ -13,7 +13,7 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/christopherkarani/Membrane?style=flat&color=gray)](https://github.com/christopherkarani/Membrane/stargazers)
 
-**A high-performance, actor-based context orchestration engine for Swift.** Membrane provides a deterministic, multi-stage pipeline for intelligent token budgeting, tiered compression, and semantic paging, ensuring LLMs operate at peak efficiency within finite context windows.
+**An actor-based context pipeline for Swift.** Membrane takes a context request, budgets it, compresses it, pages low-priority slices out, and emits something the model can actually fit.
 
 [English](README.md) | [Español](locales/README.es.md) | [日本語](locales/README.ja.md) | [中文](locales/README.zh-CN.md)
 
@@ -21,19 +21,19 @@
 
 ---
 
-## Key Features
+## What it does
 
-- **Deterministic Budgeting:** Partition tokens across 9 domain buckets (history, tools, RAG) with strict protocol-enforced ceilings.
-- **Multi-Tier Compression:** Dynamically transition context between `full`, `gist` (summarized), and `micro` (minimal reference) tiers to maximize information density.
-- **Actor-Isolated Pipeline:** Built on Swift 6 Concurrency, ensuring thread-safe, non-blocking execution across every stage.
-- **Unified Memory Estimation:** Integrated KV cache estimation for GQA architectures (M-series Silicon) to prevent OOM during inference.
-- **Zero-Copy Paging:** Efficiently evict low-importance semantic slices under pressure while preserving critical conversation state.
+- **Deterministic budgeting:** partitions tokens across 9 domain buckets with hard ceilings.
+- **Tiered compression:** moves context between `full`, `gist`, and `micro` tiers as pressure increases.
+- **Actor-isolated stages:** each stage runs on Swift concurrency primitives instead of shared mutable state.
+- **Memory estimation:** includes KV-cache estimation for GQA-style models on Apple Silicon.
+- **Semantic paging:** evicts low-priority slices before the request blows past the window.
 
 ## The Problem
 
-Large language models have finite context windows. Application state—system prompts, conversation history, long-term memory, tool definitions, retrieval results, and binary data—compete for the same token budget. Naive truncation loses critical information, while overstuffing degrades output quality and wastes resources.
+Large language models have finite context windows. System prompts, conversation history, long-term memory, tool definitions, retrieval results, and binary data all compete for the same budget. Naive truncation drops useful context; overstuffing hurts output quality and wastes tokens.
 
-Membrane solves this with a 5-stage pipeline that intelligently distills what stays, what gets compressed, and what gets paged out.
+Membrane handles that with a 5-stage pipeline that decides what stays, what gets compressed, and what gets paged out.
 
 ## How It Works
 
@@ -47,7 +47,7 @@ graph TD
     F --> G[PlannedRequest]
 ```
 
-Every stage is a specialized **Actor** conforming to a unified protocol:
+Every stage is an actor conforming to the same protocol:
 
 ```swift
 public protocol MembraneStage: Actor, Sendable {
@@ -73,16 +73,16 @@ dependencies: [
 
 ### Basic Usage
 
-Leverage the idiomatic `MembranePipeline` to prepare context for inference:
+Use `MembranePipeline` to prepare context for inference:
 
 ```swift
 import Membrane
 import MembraneCore
 
-// 1. Define a deterministic budget profile
+// 1. Define a budget profile
 let budget = ContextBudget(totalTokens: 4096, profile: .foundationModels4K)
 
-// 2. Initialize the pipeline with desired stages
+// 2. Initialize the pipeline
 let pipeline = MembranePipeline.foundationModel(
     budget: budget,
     intake: myIntakeStage,
@@ -121,7 +121,7 @@ let budget = ContextBudget(totalTokens: 200_000, profile: .cloud200K)
 
 ## Performance
 
-Membrane is engineered for ultra-low latency context orchestration on Apple Silicon. By utilizing Swift Actors and structured concurrency, the pipeline ensures minimal overhead even with massive context windows.
+Membrane is built to keep context preparation overhead low on Apple Silicon. The numbers below show the extra time the pipeline adds on top of raw request handling.
 
 ### Context Preparation Latency
 
@@ -149,7 +149,7 @@ Membrane is engineered for ultra-low latency context orchestration on Apple Sili
 
 </div>
 
-> **Benchmark Hardware:** M3 Max (16-core CPU, 40-core GPU), 128GB Unified Memory.  
+> **Benchmark hardware:** M3 Max (16-core CPU, 40-core GPU), 128GB unified memory.
 > *Note: Latency includes Intake, Budget, Compress, and Page stages.*
 
 ## Architecture
@@ -170,9 +170,9 @@ Context slices are assigned compression tiers with different token multipliers:
 
 | Tier | Multiplier | Use Case |
 |------|-----------|----------|
-| `full` | 1.0x | Critical content -- system prompts, recent turns |
-| `gist` | 0.25x | Summarized content -- older history, background context |
-| `micro` | 0.08x | Minimal reference -- entity names, timestamps, topic markers |
+| `full` | 1.0x | Critical content, such as system prompts and recent turns |
+| `gist` | 0.25x | Summarized content, such as older history and background context |
+| `micro` | 0.08x | Minimal references, such as entity names, timestamps, and topic markers |
 
 ### Token Budget Algebra
 
@@ -205,7 +205,7 @@ Budget profiles define the allocation strategy. Custom profiles are supported fo
 
 ### Custom Stages
 
-Implement any stage protocol to add your own logic:
+Implement any stage protocol when you want custom logic:
 
 ```swift
 public actor MyCustomCompressor: CompressStage {
@@ -224,9 +224,9 @@ public actor MyCustomCompressor: CompressStage {
 |--------|---------|-------------|
 | **MembraneCore** | Types, protocols, budget algebra | swift-collections |
 | **Membrane** | Pipeline orchestrator + built-in stages | MembraneCore |
-| **MembraneWax** | Persistent storage via [Wax](https://github.com/christopherkarani/Wax) -- RAPTOR index, pointer store | Membrane, Wax |
-| **MembraneHive** | Checkpoint/restore via [Hive](https://github.com/christopherkarani/Hive) -- save and resume pipeline state | Membrane, HiveCore |
-| **MembraneConduit** | Token counting via [Conduit](https://github.com/christopherkarani/Conduit) -- accurate token accounting, retry logic | Membrane, Conduit |
+| **MembraneWax** | Persistent storage via [Wax](https://github.com/christopherkarani/Wax), including the RAPTOR index and pointer store | Membrane, Wax |
+| **MembraneHive** | Checkpoint and restore via [Hive](https://github.com/christopherkarani/Hive) | Membrane, HiveCore |
+| **MembraneConduit** | Token counting via [Conduit](https://github.com/christopherkarani/Conduit) | Membrane, Conduit |
 
 ## Requirements
 
@@ -235,11 +235,11 @@ public actor MyCustomCompressor: CompressStage {
 
 ## Design Principles
 
-- **Actor-isolated** -- Every stage is an Actor. No shared mutable state. Safe by construction.
-- **Deterministic** -- Identical inputs produce identical outputs. Sorting is stable, algorithms are seeded.
-- **Composable** -- Mix and match stages. Skip what you don't need. Write your own.
-- **Bounded** -- Collections have maximum counts. CSO distillation caps entities at 50, decisions at 20, facts at 30. No unbounded growth.
-- **Recoverable** -- Errors carry recovery strategies (`compressMore`, `evictAndRetry`, `offloadToDisk`, `fail`), not just messages.
+- **Actor-isolated:** every stage is an actor. There is no shared mutable state.
+- **Deterministic:** identical inputs produce identical outputs.
+- **Composable:** you can swap stages in and out or write your own.
+- **Bounded:** collections have maximum sizes; the pipeline does not grow without limit.
+- **Recoverable:** errors include recovery strategies such as `compressMore`, `evictAndRetry`, `offloadToDisk`, or `fail`.
 
 ## Part of the AIStack
 
