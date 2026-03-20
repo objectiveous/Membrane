@@ -24,13 +24,12 @@ import Testing
         )
 
         let resolved = try await backend.resolve(pointerID: pointer.id)
-        let meta = try #require(await backend.frameMeta(forPointerID: pointer.id))
+        let provenance = try #require(await backend.provenance(forPointerID: pointer.id))
 
         #expect(resolved == payload)
-        #expect(meta.role == .blob)
-        #expect(meta.metadata?.entries["membrane.kind"] == "pointerPayload")
-        #expect(meta.metadata?.entries["membrane.pointer.id"] == pointer.id)
-        #expect(meta.metadata?.entries["membrane.pointer.sha256"]?.isEmpty == false)
+        #expect(provenance.kind == "pointerPayload")
+        #expect(provenance.metadata["membrane.pointer.id"] == pointer.id)
+        #expect(provenance.metadata["membrane.pointer.sha256"]?.isEmpty == false)
     }
 
     @Test func ragSearchExcludesPointerPayloadFramesByDefault() async throws {
@@ -58,14 +57,11 @@ import Testing
             includePointerPayloads: true
         )
 
-        let normalMetas = await backend.frameMetas(frameIDs: normalOnly.results.map(\.frameId))
-        let withPointerMetas = await backend.frameMetas(frameIDs: withPointers.results.map(\.frameId))
-
-        #expect(normalMetas.values.allSatisfy { $0.metadata?.entries["membrane.kind"] != "pointerPayload" })
-        #expect(withPointerMetas.values.contains { $0.metadata?.entries["membrane.kind"] == "pointerPayload" })
+        #expect(normalOnly.items.allSatisfy { $0.metadata["membrane.kind"] != "pointerPayload" })
+        #expect(withPointers.items.contains { $0.metadata["membrane.kind"] == "pointerPayload" })
     }
 
-    @Test func raptorNodesPersistAsSyntheticFramesWithStableNodeIDs() async throws {
+    @Test func raptorNodesPersistAndRoundTripByNodeID() async throws {
         let url = makeTempWaxURL()
         defer { try? FileManager.default.removeItem(at: url) }
 
@@ -83,11 +79,10 @@ import Testing
 
         let firstFrame = try await index.store(node: node)
         let secondFrame = try await index.store(node: node)
-        let meta = try #require(await index.frameMeta(forNodeID: "node-A"))
+        let restored = try #require(try await index.node(forID: "node-A"))
 
         #expect(firstFrame == secondFrame)
-        #expect(meta.metadata?.entries["membrane.kind"] == "raptorNode")
-        #expect(meta.metadata?.entries["membrane.raptor.id"] == "node-A")
+        #expect(restored == node)
     }
 
     @Test func raptorSearchUsesFusionAndReturnsDeterministicOrder() async throws {
