@@ -1,5 +1,5 @@
 import Testing
-import Conduit
+import ConduitAdvanced
 @testable import MembraneCore
 @testable import MembraneConduit
 
