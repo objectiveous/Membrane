@@ -26,18 +26,19 @@ if useLocalDeps {
     ]
 } else {
     dependencies += [
-        .package(url: "https://github.com/christopherkarani/Hive", exact: "0.1.8"),
-        .package(url: "https://github.com/christopherkarani/ContextCore.git", exact: "0.1.0"),
+        // Keep Hive pinned to Swarm's dependency (avoid mixing local/remote HiveCore in the graph).
+        .package(url: "https://github.com/christopherkarani/Hive", from: "0.1.9"),
+        .package(url: "https://github.com/christopherkarani/ContextCore.git", from: "1.0.0"),
         .package(
             url: "https://github.com/christopherkarani/Conduit",
-            exact: "0.3.10",
+            from: "0.3.10",
             traits: [
                 .trait(name: "OpenAI"),
                 .trait(name: "OpenRouter"),
                 .trait(name: "Anthropic"),
             ]
         ),
-        .package(url: "https://github.com/christopherkarani/Wax.git", exact: "0.1.19"),
+        .package(url: "https://github.com/christopherkarani/Wax.git", from: "0.1.19"),
     ]
 }
 

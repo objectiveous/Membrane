@@ -5,7 +5,7 @@ import Testing
 
 @Suite struct MembraneWaxBootstrapTests {
     @Test func moduleImports() {
-        #expect(WaxStorageBackend.self is Any.Type)
+        _ = WaxStorageBackend.self
     }
 
     @Test func pointerPayloadStoredAsBlobWithMembraneMetadata() async throws {

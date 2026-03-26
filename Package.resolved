@@ -1,5 +1,5 @@
 {
-  "originHash" : "68cae2f8cb58c6aa5b5faea83334fc8a1118dfee0b288aaa803a48bf14de997d",
+  "originHash" : "d518b261959fdfa66a49f0077e342e27eab30eda282d18fc05a50d51518eeff8",
   "pins" : [
     {
       "identity" : "conduit",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/christopherkarani/ContextCore.git",
       "state" : {
-        "revision" : "96713f7f11abf29ef9f8f5ed52e32324883351b5",
-        "version" : "0.1.0"
+        "revision" : "0a5152a2dc3568cf3394b1b46c8e62d8b1d84198",
+        "version" : "1.0.0"
       }
     },
     {
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/christopherkarani/Hive",
       "state" : {
-        "revision" : "2172b53796151d3d03e6e53bd0e9f1587be25017",
-        "version" : "0.1.8"
+        "revision" : "194d36064ec0ee06653cd4aae51fd3b2ad1b32c3",
+        "version" : "0.1.9"
       }
     },
     {
@@ -105,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/huggingface/swift-jinja.git",
       "state" : {
-        "revision" : "f731f03bf746481d4fda07f817c3774390c4d5b9",
-        "version" : "2.3.2"
+        "revision" : "2039e9760ba1694f9962ccd2c616403983d46895",
+        "version" : "2.3.3"
       }
     },
     {
@@ -123,8 +123,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
       "state" : {
-        "revision" : "b31565862a8f39866af50bc6676160d8dda7de35",
-        "version" : "2.96.0"
+        "revision" : "558f24a4647193b5a0e2104031b71c55d31ff83a",
+        "version" : "2.97.1"
       }
     },
     {
@@ -150,8 +150,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/huggingface/swift-transformers",
       "state" : {
-        "revision" : "eed7264ac5e4ec5dfa6165c6e5c5577364344fe4",
-        "version" : "1.2.0"
+        "revision" : "b38443e44d93eca770f2eb68e2a4d0fa100f9aa2",
+        "version" : "1.3.0"
       }
     },
     {
