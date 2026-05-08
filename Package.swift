@@ -6,10 +6,12 @@ let packageRoot = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
 let useLocalDeps = ProcessInfo.processInfo.environment["AISTACK_USE_LOCAL_DEPS"] == "1"
     || ProcessInfo.processInfo.environment["MEMBRANE_USE_LOCAL_DEPS"] == "1"
 
-// Conduit is always resolved by path (sibling submodule under Vendor/Conduit
-// in the OneWorkspace consumer) so the OneApp Anthropic patches on our fork's
-// main are what compiles. Hive/ContextCore/Wax remain URL-pinned to upstream
-// until we fork them too. See OneWorkspace skill `vendor-cohort-forking`.
+// Conduit and Wax are always resolved by path (sibling submodules under
+// Vendor/Conduit and Vendor/Wax in the OneWorkspace consumer) so the OneApp
+// Anthropic patches on Conduit's fork main are what compiles, and so the Wax
+// identity matches consumers that path-pin it too (avoids SwiftPM
+// "Conflicting identity for wax" errors). Hive/ContextCore remain URL-pinned
+// to upstream until forked. See OneWorkspace skill `vendor-cohort-forking`.
 var dependencies: [Package.Dependency] = [
     .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.0"),
     .package(
@@ -20,20 +22,19 @@ var dependencies: [Package.Dependency] = [
             .trait(name: "Anthropic"),
         ]
     ),
+    .package(path: packageRoot.appendingPathComponent("../Wax").path),
 ]
 
 if useLocalDeps {
     dependencies += [
         .package(path: packageRoot.appendingPathComponent("../Hive").path),
         .package(path: packageRoot.appendingPathComponent("../ContextCore").path),
-        .package(path: packageRoot.appendingPathComponent("../Wax").path),
     ]
 } else {
     dependencies += [
         // Keep Hive pinned to Swarm's dependency (avoid mixing local/remote HiveCore in the graph).
         .package(url: "https://github.com/christopherkarani/Hive", from: "0.1.9"),
         .package(url: "https://github.com/christopherkarani/ContextCore.git", from: "1.0.0"),
-        .package(url: "https://github.com/christopherkarani/Wax.git", from: "0.1.19"),
     ]
 }
 
