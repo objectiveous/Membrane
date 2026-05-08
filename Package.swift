@@ -6,22 +6,26 @@ let packageRoot = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
 let useLocalDeps = ProcessInfo.processInfo.environment["AISTACK_USE_LOCAL_DEPS"] == "1"
     || ProcessInfo.processInfo.environment["MEMBRANE_USE_LOCAL_DEPS"] == "1"
 
+// Conduit is always resolved by path (sibling submodule under Vendor/Conduit
+// in the OneWorkspace consumer) so the OneApp Anthropic patches on our fork's
+// main are what compiles. Hive/ContextCore/Wax remain URL-pinned to upstream
+// until we fork them too. See OneWorkspace skill `vendor-cohort-forking`.
 var dependencies: [Package.Dependency] = [
     .package(url: "https://github.com/apple/swift-collections.git", from: "1.1.0"),
+    .package(
+        path: packageRoot.appendingPathComponent("../Conduit").path,
+        traits: [
+            .trait(name: "OpenAI"),
+            .trait(name: "OpenRouter"),
+            .trait(name: "Anthropic"),
+        ]
+    ),
 ]
 
 if useLocalDeps {
     dependencies += [
         .package(path: packageRoot.appendingPathComponent("../Hive").path),
         .package(path: packageRoot.appendingPathComponent("../ContextCore").path),
-        .package(
-            path: packageRoot.appendingPathComponent("../Conduit").path,
-            traits: [
-                .trait(name: "OpenAI"),
-                .trait(name: "OpenRouter"),
-                .trait(name: "Anthropic"),
-            ]
-        ),
         .package(path: packageRoot.appendingPathComponent("../Wax").path),
     ]
 } else {
@@ -29,15 +33,6 @@ if useLocalDeps {
         // Keep Hive pinned to Swarm's dependency (avoid mixing local/remote HiveCore in the graph).
         .package(url: "https://github.com/christopherkarani/Hive", from: "0.1.9"),
         .package(url: "https://github.com/christopherkarani/ContextCore.git", from: "1.0.0"),
-        .package(
-            url: "https://github.com/christopherkarani/Conduit",
-            from: "0.3.10",
-            traits: [
-                .trait(name: "OpenAI"),
-                .trait(name: "OpenRouter"),
-                .trait(name: "Anthropic"),
-            ]
-        ),
         .package(url: "https://github.com/christopherkarani/Wax.git", from: "0.1.19"),
     ]
 }
